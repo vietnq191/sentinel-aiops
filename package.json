@@ -1,0 +1,19 @@
+{
+  "name": "sentinel-aiops-root",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Sentinel-AIOps Observability and Remediation Monorepo root",
+  "scripts": {
+    "test": "npm run test --prefix apps/analyzer",
+    "test:integration": "npm run test:integration --prefix apps/analyzer",
+    "build:analyzer": "npm run build --prefix apps/analyzer",
+    "build:dashboard": "npm run build --prefix apps/dashboard",
+    "build": "npm run build:analyzer && npm run build:dashboard",
+    "dev:analyzer": "npm run dev --prefix apps/analyzer",
+    "dev:dashboard": "npm run dev --prefix apps/dashboard",
+    "dev:simulator": "npm start --prefix apps/simulator"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}

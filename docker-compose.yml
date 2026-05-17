@@ -1,0 +1,99 @@
+services:
+  # Monitoring: Metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sentinel-prometheus
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - sentinel-network
+
+  # Monitoring: Logs
+  loki:
+    image: grafana/loki:latest
+    container_name: sentinel-loki
+    volumes:
+      - ./infra/loki/loki-config.yml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    networks:
+      - sentinel-network
+
+  # Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sentinel-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - sentinel-network
+    depends_on:
+      - prometheus
+      - loki
+
+  # App Simulator
+  simulator:
+    build: ./apps/simulator
+    container_name: sentinel-simulator
+    ports:
+      - "${SIMULATOR_PORT}:${SIMULATOR_PORT}"
+    environment:
+      - LOKI_PUSH_URL=${LOKI_PUSH_URL}
+      - PORT=${SIMULATOR_PORT}
+    networks:
+      - sentinel-network
+    depends_on:
+      - loki
+
+  # AI Analyzer (Upgraded to NestJS SRE Core)
+  analyzer:
+    build: ./apps/analyzer
+    container_name: sentinel-analyzer
+    env_file:
+      - .env
+    ports:
+      - "${ANALYZER_PORT}:${ANALYZER_PORT}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL}
+      - GEMINI_API_BASE=${GEMINI_API_BASE}
+      - LOKI_QUERY_URL=${LOKI_QUERY_URL}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - TELEGRAM_API_BASE=${TELEGRAM_API_BASE}
+      - TELEGRAM_GET_ME_PATH=${TELEGRAM_GET_ME_PATH}
+      - TELEGRAM_SEND_MESSAGE_PATH=${TELEGRAM_SEND_MESSAGE_PATH}
+      - PORT=${ANALYZER_PORT}
+    networks:
+      - sentinel-network
+    depends_on:
+      - loki
+      - simulator
+
+  # Premium SRE Web Dashboard
+  dashboard:
+    build: ./apps/dashboard
+    container_name: sentinel-dashboard
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
+      - VITE_SIMULATOR_URL=${VITE_SIMULATOR_URL}
+    networks:
+      - sentinel-network
+    depends_on:
+      - analyzer
+
+networks:
+  sentinel-network:
+    driver: bridge

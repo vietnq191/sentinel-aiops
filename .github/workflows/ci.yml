@@ -1,0 +1,76 @@
+name: Sentinel-AIOps CI/CD Pipeline 🚀
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  quality-assurance:
+    name: 🧪 Quality Assurance & Build Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: |
+            apps/analyzer/package-lock.json
+            apps/dashboard/package-lock.json
+
+      - name: ⚙️ Install & Compile NestJS Backend
+        run: |
+          cd apps/analyzer
+          npm ci
+          npm run build
+
+      - name: ⚙️ Install & Compile React Dashboard
+        run: |
+          cd apps/dashboard
+          npm ci
+          npm run build
+
+  docker-delivery:
+    name: 🐳 Docker Build & Publish
+    needs: quality-assurance
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 📦 Build & Publish NestJS Analyzer
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/analyzer
+          file: ./apps/analyzer/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/sentinel-analyzer:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/sentinel-analyzer:${{ github.sha }}
+
+      - name: 📦 Build & Publish React Dashboard
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/dashboard
+          file: ./apps/dashboard/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/sentinel-dashboard:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/sentinel-dashboard:${{ github.sha }}

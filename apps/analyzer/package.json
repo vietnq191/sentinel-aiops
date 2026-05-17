@@ -1,0 +1,72 @@
+{
+  "name": "analyzer",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "dist/main.js",
+  "imports": {
+    "#src/*": "./dist/*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "nodemon --watch src -e ts --exec ts-node src/main.ts",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testRegex '.*\\.integration\\.spec\\.ts$' --runInBand"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@nestjs/common": "^11.1.21",
+    "@nestjs/core": "^11.1.21",
+    "@nestjs/platform-express": "^11.1.21",
+    "axios": "^1.16.1",
+    "dockerode": "^5.0.0",
+    "dotenv": "^17.4.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.1.21",
+    "@types/dockerode": "^4.0.1",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.8.0",
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "ts-jest": "^29.4.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*(?<!\\.integration)\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": [
+        "ts-jest",
+        {
+          "useESM": true
+        }
+      ]
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node",
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ],
+    "moduleNameMapper": {
+      "^#src/(.*)\\.js$": "<rootDir>/$1",
+      "^(\\.\\.?\\/.+)\\.js$": "$1"
+    }
+  }
+}
